@@ -1,34 +1,24 @@
 package config
 
 import (
-	"errors"
 	"os"
 
 	"gopkg.in/yaml.v2"
 )
 
-type config struct {
-	Follower map[string]any `yaml:"follower"`
-	Leader   map[string]any `yaml:"leader"`
-}
-
-func loadConfiguration(path string) (*config, error) {
+func loadConfiguration(path string) (map[string]any, error) {
 	fileBytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	var cfg config
+	var cfg map[string]any
 
 	if err = yaml.UnmarshalStrict(fileBytes, &cfg); err != nil {
 		return nil, err
 	}
 
-	if cfg.Follower == nil {
-		return nil, errors.New("missing follower configuration")
-	}
-
-	return &cfg, nil
+	return cfg, nil
 }
 
 func writeConfiguration(path string, cfg map[string]any) error {

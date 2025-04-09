@@ -2,8 +2,6 @@ package config
 
 import (
 	"context"
-
-	"github.com/imdario/mergo"
 )
 
 type Reconciler struct {
@@ -24,17 +22,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, leader bool) error {
 		return err
 	}
 
-	targetCfg := cfg.Follower
+	targetCfg := cfg
 
-	if leader {
-		if err := mergo.Merge(
-			&targetCfg,
-			cfg.Leader,
-			mergo.WithOverride,
-			mergo.WithAppendSlice,
-		); err != nil {
-			return err
-		}
+	if !leader {
+		delete(targetCfg, "scrape_configs")
 	}
 
 	return writeConfiguration(r.outputPath, targetCfg)

@@ -3,10 +3,9 @@ package watcher
 import (
 	"context"
 	"fmt"
-	"path/filepath"
-
 	"github.com/fsnotify/fsnotify"
 	"k8s.io/klog/v2"
+	"path/filepath"
 
 	"github.com/jlevesy/prometheus-elector/config"
 	"github.com/jlevesy/prometheus-elector/election"
@@ -18,25 +17,28 @@ type FileWatcher struct {
 	reconciler    *config.Reconciler
 	leaderChecker election.LeaderChecker
 	notifier      notifier.Notifier
+	configPath    string
 }
 
 func New(path string, reconciler *config.Reconciler, notifier notifier.Notifier, leaderChecker election.LeaderChecker) (*FileWatcher, error) {
 	watcher, err := fsnotify.NewWatcher()
+	configDir := filepath.Dir(path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create fsnotify watcher: %w", err)
 	}
 
-	if err := watcher.Add(path); err != nil {
+	if err := watcher.Add(configDir); err != nil {
 		return nil, fmt.Errorf("unable to create watch config directory: %w", err)
 	}
 
-	klog.InfoS("Watching config directory", "path", path)
+	klog.InfoS("Watching config directory", "path", configDir)
 
 	return &FileWatcher{
 		fsWatcher:     watcher,
 		leaderChecker: leaderChecker,
 		reconciler:    reconciler,
 		notifier:      notifier,
+		configPath:    filepath.Base(path),
 	}, nil
 }
 
@@ -53,7 +55,7 @@ func (f *FileWatcher) Watch(ctx context.Context) error {
 				return nil
 			}
 
-			if !evt.Has(fsnotify.Create) || filepath.Base(evt.Name) != "..data" {
+			if !evt.Has(fsnotify.Create) || !(filepath.Base(evt.Name) == f.configPath) {
 				continue
 			}
 

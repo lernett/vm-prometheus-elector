@@ -6,7 +6,6 @@ import (
 	"flag"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 	"time"
 
@@ -158,7 +157,7 @@ func run() int {
 		klog.Info("Graceful shutdown, left the election")
 	}()
 
-	watcher, err := watcher.New(filepath.Dir(cfg.configPath), reconciller, notifier, elector.Status())
+	watcher, err := watcher.New(cfg.configPath, reconciller, notifier, elector.Status())
 	if err != nil {
 		klog.ErrorS(err, "Can't create the watcher")
 		return 1
